@@ -3,7 +3,7 @@ import "./SortingVisualizer.css";
 import * as algos from "./sortingAlgorithms/sortingAlgorhitms";
 
 const ANIMATION_SPEED_MS = 2;
-const NUMBER_OF_BARS = 200;
+const NUMBER_OF_BARS = 300;
 const PRIMARY_COLOR = "grey";
 const SECONDARY_COLOR = "red";
 
@@ -114,9 +114,6 @@ export default class SortingVisualizer extends React.Component {
             onClick={() => this.bubbleSort()}
           >
             Bubble Sort!
-          </button>
-          <button type="button" className="btn btn-dark m-2">
-            Quick Sort!
           </button>
         </div>
       </div>
