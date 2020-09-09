@@ -1,11 +1,8 @@
 import React from "react";
 import "./SortingVisualizer.css";
-import * as algos from "./sortingAlgorithms/sortingAlgorhitms";
 
 const ANIMATION_SPEED_MS = 2;
 const NUMBER_OF_BARS = 300;
-const PRIMARY_COLOR = "grey";
-const SECONDARY_COLOR = "red";
 
 export default class SortingVisualizer extends React.Component {
   constructor(props) {
@@ -17,56 +14,116 @@ export default class SortingVisualizer extends React.Component {
     this.resetArray();
   }
 
-  // merge sort: https://www.geeksforgeeks.org/merge-sort/
-  mergeSort() {
-    const anims = algos.getMergeSortAnimations(this.state.array);
-    for (let i = 0; i < anims.length; i++) {
-      const arrBars = document.getElementsByClassName("array-bar");
-      const isColorChange = i % 3 !== 2;
-      if (isColorChange) {
-        const [barOneId, barTwoId] = anims[i];
-        const barOneStyle = arrBars[barOneId].style;
-        const barTwoStyle = arrBars[barTwoId].style;
-        const color = i % 3 === 0 ? SECONDARY_COLOR : PRIMARY_COLOR;
-        setTimeout(() => {
-          barOneStyle.backgroundColor = color;
-          barTwoStyle.backgroundColor = color;
-        }, i * ANIMATION_SPEED_MS);
+  async mergeSort(arr, left, right) {
+    if (right - left > 1) {
+      let middle = left + ((right - left) >> 1);
+      Promise.all([
+        await this.mergeSort(arr, left, middle),
+        await this.mergeSort(arr, middle, right),
+      ]);
+      await this.merge(arr, left, middle, right);
+      this.setState({ array: arr });
+    }
+  }
+
+  async merge(arr, left, middle, right) {
+    let temp = [];
+    let len = middle - left;
+    let i, j, k;
+    for (i = 0; i < len; i++) {
+      temp[i] = arr[left + i];
+    }
+    i = 0;
+    j = middle;
+    k = left;
+    while (i < len && j < right) {
+      if (temp[i] <= arr[j]) {
+        arr[k++] = temp[i++];
       } else {
-        setTimeout(() => {
-          const [barOneId, newHeight] = anims[i];
-          const barOneStyle = arrBars[barOneId].style;
-          barOneStyle.height = `${newHeight}vh`;
-        }, i * ANIMATION_SPEED_MS);
+        arr[k++] = arr[j++];
+      }
+      this.setState({ array: arr });
+      await sleep(ANIMATION_SPEED_MS);
+    }
+    while (i < len) {
+      arr[k++] = temp[i++];
+      this.setState({ array: arr });
+      await sleep(ANIMATION_SPEED_MS);
+    }
+  }
+
+  async quickSort(arr, start, end) {
+    if (start >= end) return;
+    let index = await this.partition(arr, start, end);
+    Promise.all([
+      await this.quickSort(arr, start, index - 1),
+      await this.quickSort(arr, index + 1, end),
+    ]);
+  }
+
+  async partition(arr, start, end) {
+    let pivotIndex = start;
+    let pivotValue = arr[end];
+    for (let i = start; i < end; i++) {
+      if (arr[i] < pivotValue) {
+        await swap(arr, i, pivotIndex);
+        this.setState({ array: arr });
+        pivotIndex++;
+      }
+    }
+    await swap(arr, pivotIndex, end);
+    this.setState({ array: arr });
+    return pivotIndex;
+  }
+
+  async pigeonHoleSort(arr) {
+    const len = arr.length;
+    let min = arr[0];
+    let min_index = 0;
+    let max = arr[0];
+    let max_index = 0;
+    const array_bars = document.getElementsByClassName("array-bar");
+    
+    for (let i = 0; i < len; i++) {
+      await sleep(ANIMATION_SPEED_MS);
+      if (arr[i] > max) {
+        array_bars[max_index].style.backgroundColor = "grey";
+        max = arr[i];
+        max_index = i;
+        array_bars[i].style.backgroundColor = "red";
+      } else if (arr[i] < min) {
+        array_bars[min_index].style.backgroundColor = "grey";
+        min = arr[i];
+        min_index = i;
+        array_bars[i].style.backgroundColor = "black";
+      } else {
+        array_bars[i].style.backgroundColor = "grey";
+      }
+    }
+    for (let i = 0; i < array_bars.length; i++) {
+      array_bars[i].style.backgroundColor = "grey";
+    }
+    let range = max - min + 1;
+    let phole = Array(len).fill(0);
+    for (let i = 0; i < len; i++) phole[arr[i] - min]++;
+    let index = 0;
+    for (let j = 0; j < range; j++) {
+      while (phole[j]-- > 0) {
+        arr[index++] = j + min;
+        this.setState({ array: arr });
+        await sleep(ANIMATION_SPEED_MS);
       }
     }
   }
 
-  // bubble sort: https://www.geeksforgeeks.org/bubble-sort/
-  bubbleSort() {
-    let arr = this.state.array;
+  async bubbleSort(arr) {
     const n = arr.length;
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n - i - 1; j++) {
-        const arrBars = document.getElementsByClassName("array-bar");
-        setTimeout(() => {
-          const barOneStyle = arrBars[j].style;
-          const barTwoStyle = arrBars[j + 1].style;
-          barOneStyle.backgroundColor = SECONDARY_COLOR;
-          barTwoStyle.backgroundColor = SECONDARY_COLOR;
-        });
-        setTimeout(() => {
-          const barOneStyle = arrBars[j].style;
-          const barTwoStyle = arrBars[j + 1].style;
-          barOneStyle.backgroundColor = PRIMARY_COLOR;
-          barTwoStyle.backgroundColor = PRIMARY_COLOR;
-          if (arr[j] > arr[j + 1]) {
-            let temp = arr[j];
-            arr[j] = arr[j + 1];
-            arr[j + 1] = temp;
-          }
+        if (arr[j] > arr[j + 1]) {
+          await swap(arr, j, j + 1);
           this.setState({ array: arr });
-        }, ANIMATION_SPEED_MS / 2);
+        }
       }
     }
   }
@@ -104,14 +161,32 @@ export default class SortingVisualizer extends React.Component {
           <button
             type="button"
             className="btn btn-dark m-2"
-            onClick={() => this.mergeSort()}
+            onClick={() =>
+              this.mergeSort(this.state.array, 0, this.state.array.length - 1)
+            }
           >
             Merge Sort!
           </button>
           <button
             type="button"
             className="btn btn-dark m-2"
-            onClick={() => this.bubbleSort()}
+            onClick={() =>
+              this.quickSort(this.state.array, 0, this.state.array.length - 1)
+            }
+          >
+            Quick Sort!
+          </button>
+          <button
+            type="button"
+            className="btn btn-dark m-2"
+            onClick={() => this.pigeonHoleSort(this.state.array)}
+          >
+            Pigeonhole Sort!
+          </button>
+          <button
+            type="button"
+            className="btn btn-dark m-2"
+            onClick={() => this.bubbleSort(this.state.array)}
           >
             Bubble Sort!
           </button>
@@ -123,4 +198,16 @@ export default class SortingVisualizer extends React.Component {
 
 function randomIntFromInterval(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function swap(arr, first, last) {
+  await sleep(ANIMATION_SPEED_MS);
+
+  let temp = arr[first];
+  arr[first] = arr[last];
+  arr[last] = temp;
 }
