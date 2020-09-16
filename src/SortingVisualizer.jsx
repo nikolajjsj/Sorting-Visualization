@@ -1,8 +1,9 @@
 import React from "react";
-import "./SortingVisualizer.css";
+import "./App.css";
 
 const ANIMATION_SPEED_MS = 2;
-const NUMBER_OF_BARS = 300;
+const NUMBER_OF_BARS = 400;
+const BAR_COLOR = "feda6a";
 
 export default class SortingVisualizer extends React.Component {
   constructor(props) {
@@ -12,6 +13,73 @@ export default class SortingVisualizer extends React.Component {
 
   componentDidMount() {
     this.resetArray();
+  }
+
+  resetArray() {
+    const array = [];
+    for (let i = 0; i < NUMBER_OF_BARS; i++) {
+      array.push(randomIntFromInterval(1, 80));
+    }
+    this.setState({ array });
+  }
+
+  render() {
+    const { array } = this.state;
+
+    return (
+      <div className="page-div">
+        <div className="array-div">
+          {array.map((value, id) => (
+            <div
+              className="array-bar"
+              style={{ height: `${value}vh` }}
+              key={id}
+            ></div>
+          ))}
+        </div>
+        <div className="buttons">
+          <button
+            type="button"
+            className="btn btn-danger m-1"
+            onClick={() => this.resetArray()}
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            className="btn btn-dark m-1"
+            onClick={() =>
+              this.mergeSort(this.state.array, 0, this.state.array.length - 1)
+            }
+          >
+            Merge Sort!
+          </button>
+          <button
+            type="button"
+            className="btn btn-dark m-1"
+            onClick={() =>
+              this.quickSort(this.state.array, 0, this.state.array.length - 1)
+            }
+          >
+            Quick Sort!
+          </button>
+          <button
+            type="button"
+            className="btn btn-dark m-1"
+            onClick={() => this.pigeonHoleSort(this.state.array)}
+          >
+            Pigeonhole Sort!
+          </button>
+          <button
+            type="button"
+            className="btn btn-dark m-1"
+            onClick={() => this.bubbleSort(this.state.array)}
+          >
+            Bubble Sort!
+          </button>
+        </div>
+      </div>
+    );
   }
 
   async mergeSort(arr, left, right) {
@@ -83,25 +151,25 @@ export default class SortingVisualizer extends React.Component {
     let max = arr[0];
     let max_index = 0;
     const array_bars = document.getElementsByClassName("array-bar");
-    
+
     for (let i = 0; i < len; i++) {
       await sleep(ANIMATION_SPEED_MS);
       if (arr[i] > max) {
-        array_bars[max_index].style.backgroundColor = "grey";
+        array_bars[max_index].style.backgroundColor = "BAR_COLOR";
         max = arr[i];
         max_index = i;
         array_bars[i].style.backgroundColor = "red";
       } else if (arr[i] < min) {
-        array_bars[min_index].style.backgroundColor = "grey";
+        array_bars[min_index].style.backgroundColor = "BAR_COLOR";
         min = arr[i];
         min_index = i;
         array_bars[i].style.backgroundColor = "black";
       } else {
-        array_bars[i].style.backgroundColor = "grey";
+        array_bars[i].style.backgroundColor = "BAR_COLOR";
       }
     }
     for (let i = 0; i < array_bars.length; i++) {
-      array_bars[i].style.backgroundColor = "grey";
+      array_bars[i].style.backgroundColor = "BAR_COLOR";
     }
     let range = max - min + 1;
     let phole = Array(len).fill(0);
@@ -126,73 +194,6 @@ export default class SortingVisualizer extends React.Component {
         }
       }
     }
-  }
-
-  resetArray() {
-    const array = [];
-    for (let i = 0; i < NUMBER_OF_BARS; i++) {
-      array.push(randomIntFromInterval(1, 90));
-    }
-    this.setState({ array });
-  }
-
-  render() {
-    const { array } = this.state;
-
-    return (
-      <div className="page-div">
-        <div className="array-div">
-          {array.map((value, id) => (
-            <div
-              className="array-bar"
-              style={{ height: `${value}vh` }}
-              key={id}
-            ></div>
-          ))}
-        </div>
-        <div className="buttons">
-          <button
-            type="button"
-            className="btn btn-danger m-2"
-            onClick={() => this.resetArray()}
-          >
-            Reset
-          </button>
-          <button
-            type="button"
-            className="btn btn-dark m-2"
-            onClick={() =>
-              this.mergeSort(this.state.array, 0, this.state.array.length - 1)
-            }
-          >
-            Merge Sort!
-          </button>
-          <button
-            type="button"
-            className="btn btn-dark m-2"
-            onClick={() =>
-              this.quickSort(this.state.array, 0, this.state.array.length - 1)
-            }
-          >
-            Quick Sort!
-          </button>
-          <button
-            type="button"
-            className="btn btn-dark m-2"
-            onClick={() => this.pigeonHoleSort(this.state.array)}
-          >
-            Pigeonhole Sort!
-          </button>
-          <button
-            type="button"
-            className="btn btn-dark m-2"
-            onClick={() => this.bubbleSort(this.state.array)}
-          >
-            Bubble Sort!
-          </button>
-        </div>
-      </div>
-    );
   }
 }
 
